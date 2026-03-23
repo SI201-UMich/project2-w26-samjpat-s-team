@@ -1,7 +1,7 @@
 # SI 201 HW4 (Library Checkout System)
-# Your name:
-# Your student id:
-# Your email:
+# Your name: Samuel Patrick
+# Your student id: 5744 3372
+# Your email: samjpat@umich.edu
 # Who or what you worked with on this homework (including generative AI like ChatGPT):
 # If you worked with generative AI also add a statement for how you used it.
 # e.g.:
@@ -17,7 +17,7 @@ import re
 import os
 import csv
 import unittest
-import requests  # kept for extra credit parity
+#import requests  # kept for extra credit parity
 
 
 # IMPORTANT NOTE:
@@ -41,7 +41,17 @@ def load_listing_results(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    results = []
+    f = open(html_path, 'r', encoding="utf-8-sig")
+    soup = BeautifulSoup(f, 'html.parser')
+    titles = soup.find_all(attrs={"data-testid":"listing-card-title"})
+    ids = soup.find_all(class_="l1j9v1wn bn2bl2p dir dir-ltr")
+    for i in range(0, len(titles)):
+        href = ids[i].get("href")
+        id = re.findall(r"rooms\/(\d+)?", href)[0]
+        results.append((titles[i].text, id))
+
+    return results
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -195,7 +205,8 @@ class TestCases(unittest.TestCase):
     def test_load_listing_results(self):
         # TODO: Check that the number of listings extracted is 18.
         # TODO: Check that the FIRST (title, id) tuple is  ("Loft in Mission District", "1944564").
-        pass
+        self.assertEqual(len(self.listings), 18)
+        self.assertEqual(self.listings[0], ("Loft in Mission District", "1944564"))
 
     def test_get_listing_details(self):
         html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
