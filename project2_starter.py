@@ -51,6 +51,8 @@ def load_listing_results(html_path) -> list[tuple]:
         id = re.findall(r"rooms\/(\d+)?", href)[0]
         results.append((titles[i].text, id))
 
+    f.close()
+
     return results
     # ==============================
     # YOUR CODE ENDS HERE
@@ -80,7 +82,56 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    html_path = f"html_files/listing_{listing_id}.html"
+    dict = {}
+    f = open(html_path, 'r', encoding="utf-8-sig")
+    soup = BeautifulSoup(f, 'html.parser')
+
+    policy_number = soup.find(class_="f19phm7j dir dir-ltr").text
+    policy_number = re.findall(r": (.+)", policy_number)[0]
+    if re.search(r'pending|pending', policy_number):
+        dict['policy_number'] = "Pending"
+    elif policy_number == '':
+        dict["policy_number"] = "Exempt"
+    else:
+        dict['policy_number'] = policy_number
+
+    host_type = soup.find(string='Superhost')
+    if host_type is None:
+        dict['host_type'] = "regular"
+    else:
+        dict['host_type'] = "Superhost"
+
+
+    host_name = soup.find(class_="_14i3z6h").text
+    host_name = host_name.replace('\xa0', ' ')
+    host_name = re.findall(r'by (.+)', host_name)[0]
+    dict['host_name'] = host_name
+    
+    room_type = soup.find(class_="ll4r2nl dir dir-ltr").text
+    if re.search(r'Private|private', room_type):
+        dict['room_type'] = "Private Room"
+    elif re.search(r'Shared|shared', room_type):
+        dict['room_type'] = "Shared Room"
+    else:
+        dict['room_type'] = "Entire Room"
+
+    
+
+    location_rating = soup.find(class_="_12si43g").text
+    location_rating = re.findall(r'(\d\.\d{1})', location_rating)[0]
+    if location_rating == []:
+        dict['location_rating'] = 0.0
+    else:
+        dict['location_rating'] = float(location_rating)
+
+
+
+    ret = {}
+    ret[listing_id] = dict
+
+    f.close()
+    return ret
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -212,12 +263,19 @@ class TestCases(unittest.TestCase):
         html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
 
         # TODO: Call get_listing_details() on each listing id above and save results in a list.
-
+        details_list = []
+        for html in html_list:
+            details_list.append(get_listing_details(html))
         # TODO: Spot-check a few known values by opening the corresponding listing_<id>.html files.
         # 1) Check that listing 467507 has the correct policy number "STR-0005349".
         # 2) Check that listing 1944564 has the correct host type "Superhost" and room type "Entire Room".
         # 3) Check that listing 1944564 has the correct location rating 4.9.
-        pass
+        self.assertEqual(details_list[0][html_list[0]]['policy_number'], "STR-0005349")
+        self.assertEqual(details_list[2][html_list[2]]['host_type'], "Superhost")
+        self.assertEqual(details_list[2][html_list[2]]['room_type'], "Entire Room")
+        self.assertEqual(details_list[2][html_list[2]]['location_rating'], 4.9)
+
+
 
     def test_create_listing_database(self):
         # TODO: Check that each tuple in detailed_data has exactly 7 elements:
@@ -233,7 +291,8 @@ class TestCases(unittest.TestCase):
         # TODO: Read the CSV back in and store rows in a list.
         # TODO: Check that the first data row matches ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"].
 
-        os.remove(out_path)
+        #os.remove(out_path)
+        pass
 
     def test_avg_location_rating_by_room_type(self):
         # TODO: Call avg_location_rating_by_room_type() and save the output.
