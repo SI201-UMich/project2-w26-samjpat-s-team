@@ -48,7 +48,7 @@ def load_listing_results(html_path) -> list[tuple]:
     ids = soup.find_all(class_="l1j9v1wn bn2bl2p dir dir-ltr")
     for i in range(0, len(titles)):
         href = ids[i].get("href")
-        id = re.findall(r"rooms\/(\d+)?", href)[0]
+        id = re.findall(r"rooms\/(?:plus\/)?(\d+)?", href)[0]
         results.append((titles[i].text, id))
 
     f.close()
@@ -88,6 +88,7 @@ def get_listing_details(listing_id) -> dict:
     soup = BeautifulSoup(f, 'html.parser')
 
     policy_number = soup.find(class_="f19phm7j dir dir-ltr").text
+    policy_number = policy_number.replace('\ufeff', '')
     policy_number = re.findall(r": (.+)", policy_number)[0]
     if re.search(r'pending|pending', policy_number):
         dict['policy_number'] = "Pending"
@@ -103,12 +104,13 @@ def get_listing_details(listing_id) -> dict:
         dict['host_type'] = "Superhost"
 
 
-    host_name = soup.find(class_="_14i3z6h").text
+    host_name = soup.find(class_="tehcqxo dir dir-ltr")
+    host_name = host_name.find('h2').text
     host_name = host_name.replace('\xa0', ' ')
     host_name = re.findall(r'by (.+)', host_name)[0]
     dict['host_name'] = host_name
     
-    room_type = soup.find(class_="ll4r2nl dir dir-ltr").text
+    room_type = soup.find(class_="_14i3z6h").text
     if re.search(r'Private|private', room_type):
         dict['room_type'] = "Private Room"
     elif re.search(r'Shared|shared', room_type):
@@ -118,11 +120,11 @@ def get_listing_details(listing_id) -> dict:
 
     
 
-    location_rating = soup.find(class_="_12si43g").text
-    location_rating = re.findall(r'(\d\.\d{1})', location_rating)[0]
+    location_rating = soup.find_all(class_="_4oybiu")
     if location_rating == []:
         dict['location_rating'] = 0.0
     else:
+        location_rating = location_rating[3].text
         dict['location_rating'] = float(location_rating)
 
 
@@ -152,7 +154,19 @@ def create_listing_database(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    lst = []
+    listing_results = load_listing_results(html_path)
+    for item in listing_results:
+        listing_details = get_listing_details(item[1])
+        lst.append((item[0], item[1],
+            listing_details[item[1]]['policy_number'],
+            listing_details[item[1]]['host_type'],
+            listing_details[item[1]]['host_name'],
+            listing_details[item[1]]['room_type'],
+            listing_details[item[1]]['location_rating']))
+        
+    return lst
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -280,9 +294,10 @@ class TestCases(unittest.TestCase):
     def test_create_listing_database(self):
         # TODO: Check that each tuple in detailed_data has exactly 7 elements:
         # (listing_title, listing_id, policy_number, host_type, host_name, room_type, location_rating)
-
+        for item in self.detailed_data:
+            self.assertEqual(len(item), 7)
         # TODO: Spot-check the LAST tuple is ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8).
-        pass
+        self.assertEqual(self.detailed_data[-1], ("Guest suite in Mission District", "467507",  "STR-0005349",  "Superhost",  "Jennifer",  "Entire Room", 4.8))
 
     def test_output_csv(self):
         out_path = os.path.join(self.base_dir, "test.csv")
