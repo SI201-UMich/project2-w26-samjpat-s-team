@@ -103,7 +103,6 @@ def get_listing_details(listing_id) -> dict:
     else:
         dict['host_type'] = "Superhost"
 
-
     host_name = soup.find(class_="tehcqxo dir dir-ltr")
     host_name = host_name.find('h2').text
     host_name = host_name.replace('\xa0', ' ')
@@ -118,16 +117,12 @@ def get_listing_details(listing_id) -> dict:
     else:
         dict['room_type'] = "Entire Room"
 
-    
-
     location_rating = soup.find_all(class_="_4oybiu")
     if location_rating == []:
         dict['location_rating'] = 0.0
     else:
         location_rating = location_rating[3].text
         dict['location_rating'] = float(location_rating)
-
-
 
     ret = {}
     ret[listing_id] = dict
@@ -188,8 +183,15 @@ def output_csv(data, filename) -> None:
     # TODO: Implement checkout logic following the instructions
     # ==============================
     # YOUR CODE STARTS HERE
-    # ==============================
-    pass
+    # ==============================        
+    first_row = ["Listing Title", "Listing ID", "Policy Number", "Host Type", "Host Name", "Room Type", "Location Rating"]
+    data = sorted(data, key=lambda item: item[6], reverse=True)
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(first_row)
+        for row in data:
+            writer.writerow(row)
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -305,9 +307,18 @@ class TestCases(unittest.TestCase):
         # TODO: Call output_csv() to write the detailed_data to a CSV file.
         # TODO: Read the CSV back in and store rows in a list.
         # TODO: Check that the first data row matches ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"].
+        output_csv(self.detailed_data, out_path)
 
-        #os.remove(out_path)
-        pass
+        rows = []
+        with open(out_path, mode='r', newline='') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                rows.append(row)
+        
+        self.assertEqual(rows[1], ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"])
+
+        os.remove(out_path)
+        
 
     def test_avg_location_rating_by_room_type(self):
         # TODO: Call avg_location_rating_by_room_type() and save the output.
