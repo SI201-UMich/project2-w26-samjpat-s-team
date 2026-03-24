@@ -214,7 +214,42 @@ def avg_location_rating_by_room_type(data) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    dict = {}
+    private_count = 0
+    private_total = 0
+    shared_count = 0
+    shared_total = 0
+    entire_count = 0
+    entire_total = 0
+    for row in data:
+        if row[6] != 0.0:
+            if row[5] == "Private Room":
+                private_total += row[6]
+                private_count += 1
+            elif row[5] == "Shared Room":
+                shared_total += row[6]
+                shared_count += 1
+            else:
+                entire_total += row[6]
+                entire_count += 1
+    
+    if private_count != 0:
+        dict['Private Room'] = private_total/private_count
+    else:
+        dict['Private Room'] = 0
+
+    if shared_count != 0:
+        dict['Shared Room'] = shared_total/shared_count
+    else:
+        dict['Shared Room'] = 0
+
+    if entire_count != 0:
+        dict['Entire Room'] = entire_total/entire_count
+    else:
+        dict['Entire Room'] = 0
+    return dict
+
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -235,7 +270,14 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    list = []
+    for row in data:
+        policy_number = row[2]
+        if policy_number != "Pending" and policy_number != "Exempt":
+            if not re.search(r'20\d{2}-00\d{4}STR|STR-000\d{4}', policy_number):
+                list.append(row[1])
+    return list
+
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -323,12 +365,14 @@ class TestCases(unittest.TestCase):
     def test_avg_location_rating_by_room_type(self):
         # TODO: Call avg_location_rating_by_room_type() and save the output.
         # TODO: Check that the average for "Private Room" is 4.9.
-        pass
+        avgs = avg_location_rating_by_room_type(self.detailed_data)
+        self.assertEqual(avgs['Private Room'], 4.9)
 
     def test_validate_policy_numbers(self):
         # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
         # TODO: Check that the list contains exactly "16204265" for this dataset.
-        pass
+        not_valid = validate_policy_numbers(self.detailed_data)
+        self.assertEqual(not_valid, ['16204265'])
 
 
 def main():
